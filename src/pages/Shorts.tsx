@@ -1,8 +1,13 @@
 
+import MainLayout from "@/components/layout/MainLayout";
 import ShortVideos from "@/components/video/ShortVideos";
 
 const Shorts = () => {
-  return <ShortVideos />;
+  return (
+    <MainLayout>
+      <ShortVideos />
+    </MainLayout>
+  );
 };
 
 export default Shorts;

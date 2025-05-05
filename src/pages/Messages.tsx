@@ -1,12 +1,13 @@
 
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import MainLayout from "@/components/layout/MainLayout";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
+import { ArrowLeft, Send } from "lucide-react";
 
 const contacts = [
   {
@@ -68,14 +69,26 @@ const sampleMessages = [
 ];
 
 const Messages = () => {
+  const navigate = useNavigate();
   const [activeContact, setActiveContact] = useState(contacts[0].id);
   const [message, setMessage] = useState("");
+  const [showChat, setShowChat] = useState(window.innerWidth >= 768);
   
   const handleSend = () => {
     if (message.trim()) {
-      // In a real app, we'd send the message to the API here
       console.log("Sending message:", message);
       setMessage("");
+    }
+  };
+  
+  const handleBackToContacts = () => {
+    setShowChat(false);
+  };
+  
+  const handleSelectContact = (contactId: string) => {
+    setActiveContact(contactId);
+    if (window.innerWidth < 768) {
+      setShowChat(true);
     }
   };
   
@@ -84,9 +97,22 @@ const Messages = () => {
       <div className="container py-4">
         <div className="border border-border rounded-lg overflow-hidden h-[calc(100vh-120px)] flex">
           {/* Contacts sidebar */}
-          <div className="w-full max-w-xs border-r border-border bg-background/50">
-            <div className="p-4 border-b border-border">
+          <div className={cn(
+            "w-full max-w-xs border-r border-border bg-background/50 transition-all duration-300 ease-in-out",
+            showChat && "hidden md:block"
+          )}>
+            <div className="p-4 border-b border-border flex items-center justify-between">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate("/")}
+                className="mr-2"
+              >
+                <ArrowLeft className="h-5 w-5" />
+                <span className="sr-only">Back</span>
+              </Button>
               <h2 className="font-bold text-lg">Messages</h2>
+              <div className="w-9"></div> {/* Spacer for alignment */}
             </div>
             <ScrollArea className="h-[calc(100vh-180px)]">
               <div className="p-2">
@@ -94,10 +120,10 @@ const Messages = () => {
                   <button
                     key={contact.id}
                     className={cn(
-                      "w-full text-left px-3 py-3 rounded-lg mb-1 hover:bg-secondary/50 transition-colors flex items-center",
+                      "w-full text-left px-3 py-3 rounded-lg mb-1 hover:bg-secondary/50 transition-colors flex items-center animate-fade-in",
                       activeContact === contact.id && "bg-secondary"
                     )}
-                    onClick={() => setActiveContact(contact.id)}
+                    onClick={() => handleSelectContact(contact.id)}
                   >
                     <div className="relative">
                       <Avatar className="h-10 w-10 mr-3">
@@ -133,9 +159,24 @@ const Messages = () => {
           </div>
           
           {/* Chat area */}
-          <div className="flex-1 flex flex-col">
+          <div className={cn(
+            "flex-1 flex flex-col transition-all duration-300 ease-in-out",
+            !showChat && "hidden md:flex"
+          )}>
             {/* Chat header */}
             <div className="p-4 border-b border-border flex items-center">
+              {window.innerWidth < 768 && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleBackToContacts}
+                  className="mr-2"
+                >
+                  <ArrowLeft className="h-5 w-5" />
+                  <span className="sr-only">Back to contacts</span>
+                </Button>
+              )}
+              
               <Avatar className="h-8 w-8 mr-3">
                 <AvatarImage 
                   src={contacts.find(c => c.id === activeContact)?.avatar} 
@@ -169,7 +210,7 @@ const Messages = () => {
                   <div 
                     key={msg.id} 
                     className={cn(
-                      "flex",
+                      "flex animate-fade-in",
                       msg.sender === "me" ? "justify-end" : "justify-start"
                     )}
                   >
@@ -214,7 +255,10 @@ const Messages = () => {
                   }
                 }}
               />
-              <Button onClick={handleSend}>Send</Button>
+              <Button onClick={handleSend}>
+                <Send className="h-4 w-4 mr-1" />
+                Send
+              </Button>
             </div>
           </div>
         </div>
