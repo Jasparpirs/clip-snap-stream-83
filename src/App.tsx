@@ -11,25 +11,28 @@ import Following from "./pages/Following";
 import Messages from "./pages/Messages";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
+import { UserProvider } from "./contexts/UserContext";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/shorts" element={<Shorts />} />
-          <Route path="/live" element={<Live />} />
-          <Route path="/following" element={<Following />} />
-          <Route path="/messages" element={<Messages />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
+      <UserProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/shorts" element={<Shorts />} />
+            <Route path="/live" element={<Live />} />
+            <Route path="/following" element={<Following />} />
+            <Route path="/messages" element={<Messages />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </UserProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );
