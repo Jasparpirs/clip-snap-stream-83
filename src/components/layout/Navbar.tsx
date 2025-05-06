@@ -14,6 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 
 interface NavbarProps {
   onMenuClick: () => void;
@@ -52,6 +53,8 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
         </div>
         
         <div className="flex items-center space-x-4">
+          <ThemeToggle />
+          
           <Button variant="ghost" size="icon" className="text-muted-foreground">
             <Bell className="h-5 w-5" />
             <span className="sr-only">Notifications</span>
