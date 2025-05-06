@@ -3,8 +3,9 @@ import { useState } from "react";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Play, ThumbsUp, MessageCircle, Share } from "lucide-react";
+import { ThumbsUp, MessageCircle, Share } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface VideoCardProps {
   video: {
@@ -23,10 +24,39 @@ interface VideoCardProps {
 
 export default function VideoCard({ video, layout = "grid" }: VideoCardProps) {
   const [isHovering, setIsHovering] = useState(false);
+  const [liked, setLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(Math.floor(Math.random() * 1000) + 100);
+
+  const handleLike = () => {
+    if (liked) {
+      setLikeCount(likeCount - 1);
+      setLiked(false);
+      toast.info("Removed like");
+    } else {
+      setLikeCount(likeCount + 1);
+      setLiked(true);
+      toast.success("Video liked!");
+    }
+  };
+
+  const handleComment = () => {
+    toast.info("Comment feature coming soon!");
+  };
+  
+  const handleShare = () => {
+    // Simulate copy to clipboard
+    toast.success("Link copied to clipboard!");
+  };
+
+  const handlePlay = () => {
+    toast("Opening video player...", {
+      description: `Now playing: ${video.title}`,
+    });
+  };
 
   return (
     <Card className={cn(
-      "border-none bg-transparent overflow-hidden",
+      "border-none bg-transparent overflow-hidden transition-all duration-200 hover:scale-[1.01]",
       layout === "feed" ? "flex flex-col md:flex-row gap-4" : ""
     )}>
       <div 
@@ -40,16 +70,20 @@ export default function VideoCard({ video, layout = "grid" }: VideoCardProps) {
         <img 
           src={video.thumbnail} 
           alt={video.title} 
-          className="object-cover w-full h-full transition-transform duration-200 group-hover:scale-105"
+          className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
         />
         
-        {isHovering && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/40">
-            <Button size="icon" variant="outline" className="rounded-full bg-primary/80 border-none">
-              <Play className="h-5 w-5" />
-            </Button>
-          </div>
-        )}
+        <div 
+          className={cn(
+            "absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity duration-200", 
+            isHovering ? "opacity-100" : "opacity-0"
+          )}
+          onClick={handlePlay}
+        >
+          <Button size="icon" variant="outline" className="rounded-full bg-primary/80 border-none animate-pulse">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+          </Button>
+        </div>
       </div>
       
       <CardContent className={cn(
@@ -76,18 +110,26 @@ export default function VideoCard({ video, layout = "grid" }: VideoCardProps) {
       
       <CardFooter className="p-3 flex justify-between">
         <div className="flex items-center space-x-2">
-          <Button variant="ghost" size="sm" className="text-muted-foreground">
-            <ThumbsUp className="mr-1 h-4 w-4" />
-            <span>Like</span>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className={cn(
+              "text-muted-foreground transition-all duration-200", 
+              liked ? "text-primary" : ""
+            )}
+            onClick={handleLike}
+          >
+            <ThumbsUp className={cn("mr-1 h-4 w-4", liked ? "fill-current" : "")} />
+            <span>{likeCount}</span>
           </Button>
           
-          <Button variant="ghost" size="sm" className="text-muted-foreground">
+          <Button variant="ghost" size="sm" className="text-muted-foreground" onClick={handleComment}>
             <MessageCircle className="mr-1 h-4 w-4" />
-            <span>Comment</span>
+            <span>{Math.floor(Math.random() * 200)}</span>
           </Button>
         </div>
         
-        <Button variant="ghost" size="sm" className="text-muted-foreground">
+        <Button variant="ghost" size="sm" className="text-muted-foreground" onClick={handleShare}>
           <Share className="mr-1 h-4 w-4" />
           <span>Share</span>
         </Button>
