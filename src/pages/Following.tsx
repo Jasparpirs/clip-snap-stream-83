@@ -6,6 +6,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useUser, User } from "@/contexts/UserContext"; 
 import LoginModal from "@/components/auth/LoginModal";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
+import { UserCheck } from "lucide-react";
 
 const suggestedUsers: User[] = [
   {
@@ -29,11 +31,15 @@ const suggestedUsers: User[] = [
 ];
 
 const Following = () => {
-  const { isAuthenticated, currentUser, followingUsers, followUser, unfollowUser, isFollowing } = useUser();
+  const { isAuthenticated, currentUser, followingUsers, followers, followUser, unfollowUser, isFollowing, isFollower } = useUser();
   const [searchTerm, setSearchTerm] = useState("");
+  const navigate = useNavigate();
   
   // Show the live users from the following list
   const liveUsers = followingUsers.filter(user => user.isLive);
+  
+  // Get mutual followers (users who follow you back)
+  const mutualFollowers = followingUsers.filter(user => isFollower(user.id));
   
   // Filter users based on search term
   const filteredFollowing = followingUsers.filter(user => 
@@ -42,6 +48,12 @@ const Following = () => {
   );
   
   const filteredSuggested = suggestedUsers.filter(user => 
+    user.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    user.username.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+  
+  // New: Users who follow you
+  const filteredFollowers = followers.filter(user => 
     user.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
     user.username.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -56,6 +68,10 @@ const Following = () => {
 
   const handleUnfollowClick = (userId: string) => {
     unfollowUser(userId);
+  };
+  
+  const viewProfile = (userId: string) => {
+    navigate(`/profile/${userId}`);
   };
   
   return (
@@ -91,15 +107,64 @@ const Following = () => {
           />
         </div>
         
+        {/* Mutual followers section (users who follow you back) */}
+        {isAuthenticated && mutualFollowers.length > 0 && (
+          <section className="mb-8 animate-fade-in">
+            <h2 className="text-lg font-semibold mb-4 flex items-center">
+              <UserCheck className="mr-2 h-5 w-5" />
+              Mutual Followers
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {mutualFollowers.filter(user => 
+                user.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                user.username.toLowerCase().includes(searchTerm.toLowerCase())
+              ).map(user => (
+                <div key={user.id} className="bg-secondary/30 border border-primary/20 rounded-lg p-4 flex items-center">
+                  <div className="relative">
+                    <Avatar className="h-12 w-12 mr-3" onClick={() => viewProfile(user.id)}>
+                      <AvatarImage src={user.avatar} alt={user.name} />
+                      <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <span className="absolute bottom-0 right-2 h-2 w-2 rounded-full bg-primary"></span>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-medium">{user.name}</h3>
+                    <p className="text-sm text-muted-foreground">{user.username}</p>
+                    <p className="text-xs text-primary mt-1">Follows you back</p>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleUnfollowClick(user.id)}
+                    >
+                      Unfollow
+                    </Button>
+                    <Button 
+                      size="sm"
+                      onClick={() => navigate("/messages")}
+                    >
+                      Message
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+        
         {/* Live now section */}
         {isAuthenticated && liveUsers.length > 0 && (
           <section className="mb-8 animate-fade-in">
             <h2 className="text-lg font-semibold mb-4">Live Now</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {liveUsers.map(user => (
+              {liveUsers.filter(user => 
+                user.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                user.username.toLowerCase().includes(searchTerm.toLowerCase())
+              ).map(user => (
                 <div key={user.id} className="bg-secondary/50 rounded-lg p-4 flex items-center">
                   <div className="relative">
-                    <Avatar className="h-14 w-14 mr-4">
+                    <Avatar className="h-14 w-14 mr-4 cursor-pointer" onClick={() => viewProfile(user.id)}>
                       <AvatarImage src={user.avatar} alt={user.name} />
                       <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
                     </Avatar>
@@ -111,6 +176,9 @@ const Following = () => {
                   <div className="flex-1">
                     <h3 className="font-medium">{user.name}</h3>
                     <p className="text-sm text-muted-foreground">{user.username}</p>
+                    {isFollower(user.id) && (
+                      <p className="text-xs text-primary mt-1">Follows you back</p>
+                    )}
                   </div>
                   <Button size="sm">Watch</Button>
                 </div>
@@ -141,21 +209,34 @@ const Following = () => {
               {isAuthenticated ? (
                 filteredFollowing.map(user => (
                   <div key={user.id} className="border border-border/50 rounded-lg p-4 flex items-center animate-fade-in">
-                    <Avatar className="h-10 w-10 mr-3">
+                    <Avatar className="h-10 w-10 mr-3 cursor-pointer" onClick={() => viewProfile(user.id)}>
                       <AvatarImage src={user.avatar} alt={user.name} />
                       <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
                       <h3 className="font-medium">{user.name}</h3>
                       <p className="text-sm text-muted-foreground">{user.username}</p>
+                      {isFollower(user.id) && (
+                        <p className="text-xs text-primary">Follows you back</p>
+                      )}
                     </div>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => handleUnfollowClick(user.id)}
-                    >
-                      Unfollow
-                    </Button>
+                    <div className="flex flex-col gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => handleUnfollowClick(user.id)}
+                      >
+                        Unfollow
+                      </Button>
+                      {isFollower(user.id) && (
+                        <Button 
+                          size="sm"
+                          onClick={() => navigate("/messages")}
+                        >
+                          Message
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 ))
               ) : (
@@ -172,6 +253,53 @@ const Following = () => {
           )}
         </section>
         
+        {/* Followers section (new) */}
+        {isAuthenticated && followers.length > 0 && (
+          <section className="mb-8">
+            <h2 className="text-lg font-semibold mb-4">Your Followers</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredFollowers.map(user => (
+                <div key={user.id} className="border border-border/50 rounded-lg p-4 flex items-center animate-fade-in">
+                  <Avatar className="h-10 w-10 mr-3 cursor-pointer" onClick={() => viewProfile(user.id)}>
+                    <AvatarImage src={user.avatar} alt={user.name} />
+                    <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1">
+                    <h3 className="font-medium">{user.name}</h3>
+                    <p className="text-sm text-muted-foreground">{user.username}</p>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    {isFollowing(user.id) ? (
+                      <>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => handleUnfollowClick(user.id)}
+                        >
+                          Unfollow
+                        </Button>
+                        <Button 
+                          size="sm"
+                          onClick={() => navigate("/messages")}
+                        >
+                          Message
+                        </Button>
+                      </>
+                    ) : (
+                      <Button 
+                        size="sm"
+                        onClick={() => handleFollowClick(user.id)}
+                      >
+                        Follow Back
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+        
         {/* Suggested accounts */}
         <section>
           <h2 className="text-lg font-semibold mb-4">Suggested for You</h2>
@@ -179,7 +307,7 @@ const Following = () => {
             {filteredSuggested.length > 0 ? (
               filteredSuggested.map(user => (
                 <div key={user.id} className="border border-border/50 rounded-lg p-4 flex items-center">
-                  <Avatar className="h-10 w-10 mr-3">
+                  <Avatar className="h-10 w-10 mr-3 cursor-pointer" onClick={() => viewProfile(user.id)}>
                     <AvatarImage src={user.avatar} alt={user.name} />
                     <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
                   </Avatar>

@@ -20,7 +20,13 @@ interface NavbarProps {
 }
 
 export default function Navbar({ onMenuClick }: NavbarProps) {
-  const { isAuthenticated, currentUser, logout } = useUser();
+  const { isAuthenticated, currentUser, logout, followers, followingUsers } = useUser();
+
+  // Calculate if there are any mutual followers for messaging
+  const hasMutualFollowers = isAuthenticated && 
+    followers.some(follower => 
+      followingUsers.some(following => following.id === follower.id)
+    );
 
   return (
     <header className="sticky top-0 z-30 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -50,10 +56,16 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
             <Bell className="h-5 w-5" />
             <span className="sr-only">Notifications</span>
           </Button>
-          <Button variant="ghost" size="icon" className="text-muted-foreground">
-            <MessageCircle className="h-5 w-5" />
-            <span className="sr-only">Messages</span>
-          </Button>
+          
+          <Link to="/messages">
+            <Button variant="ghost" size="icon" className="relative text-muted-foreground">
+              <MessageCircle className="h-5 w-5" />
+              {hasMutualFollowers && (
+                <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-primary"></span>
+              )}
+              <span className="sr-only">Messages</span>
+            </Button>
+          </Link>
           
           {isAuthenticated ? (
             <DropdownMenu>

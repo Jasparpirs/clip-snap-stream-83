@@ -15,30 +15,40 @@ export type User = {
   following?: string;
   likes?: string;
   location?: string;
+  lastMessage?: string;
+  timestamp?: string;
+  unread?: boolean;
+  online?: boolean;
 };
 
 type UserContextType = {
   currentUser: User | null;
   isAuthenticated: boolean;
   followingUsers: User[];
+  followers: User[];
   login: (username: string, password: string) => Promise<boolean>;
   logout: () => void;
   register: (name: string, username: string, password: string) => Promise<boolean>;
   followUser: (userId: string) => void;
   unfollowUser: (userId: string) => void;
   isFollowing: (userId: string) => boolean;
+  isFollower: (userId: string) => boolean;
+  isMutualFollow: (userId: string) => boolean;
 };
 
 const UserContext = createContext<UserContextType>({
   currentUser: null,
   isAuthenticated: false,
   followingUsers: [],
+  followers: [],
   login: () => Promise.resolve(false),
   logout: () => {},
   register: () => Promise.resolve(false),
   followUser: () => {},
   unfollowUser: () => {},
   isFollowing: () => false,
+  isFollower: () => false,
+  isMutualFollow: () => false,
 });
 
 // Demo users for local testing
@@ -49,6 +59,10 @@ const demoUsers: User[] = [
     username: "@alexmorgan",
     avatar: "https://i.pravatar.cc/150?img=1",
     isLive: true,
+    lastMessage: "Hey, did you see my new video?",
+    timestamp: "2m ago",
+    unread: true,
+    online: true
   },
   {
     id: "f2",
@@ -56,6 +70,10 @@ const demoUsers: User[] = [
     username: "@jamiechen",
     avatar: "https://i.pravatar.cc/150?img=2",
     isLive: false,
+    lastMessage: "Thanks for the feedback on my stream",
+    timestamp: "1h ago",
+    unread: false,
+    online: false
   },
   {
     id: "f3",
@@ -63,6 +81,10 @@ const demoUsers: User[] = [
     username: "@taylorswift",
     avatar: "https://i.pravatar.cc/150?img=3",
     isLive: false,
+    lastMessage: "I'd love to collaborate on your next project!",
+    timestamp: "3h ago",
+    unread: true,
+    online: true
   },
   {
     id: "f4",
@@ -70,6 +92,10 @@ const demoUsers: User[] = [
     username: "@chrisevans",
     avatar: "https://i.pravatar.cc/150?img=4",
     isLive: true,
+    lastMessage: "That video was amazing",
+    timestamp: "1d ago",
+    unread: false,
+    online: false
   },
   {
     id: "f5",
@@ -77,6 +103,10 @@ const demoUsers: User[] = [
     username: "@zoesmith",
     avatar: "https://i.pravatar.cc/150?img=5",
     isLive: false,
+    lastMessage: "Let me know when you're free to chat",
+    timestamp: "1d ago",
+    unread: false,
+    online: true
   },
   {
     id: "s1",
@@ -112,6 +142,7 @@ const demoUsers: User[] = [
 export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [followingUsers, setFollowingUsers] = useState<User[]>([]);
+  const [followers, setFollowers] = useState<User[]>([]);
   
   // Load user data from localStorage on component mount
   useEffect(() => {
@@ -125,6 +156,15 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const followingIds = JSON.parse(savedFollowing);
         setFollowingUsers(
           demoUsers.filter(user => followingIds.includes(user.id))
+        );
+      }
+      
+      // Load followers data
+      const savedFollowers = localStorage.getItem('followers');
+      if (savedFollowers) {
+        const followerIds = JSON.parse(savedFollowers);
+        setFollowers(
+          demoUsers.filter(user => followerIds.includes(user.id))
         );
       }
     }
@@ -144,6 +184,15 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const followingIds = JSON.parse(savedFollowing);
         setFollowingUsers(
           demoUsers.filter(u => followingIds.includes(u.id))
+        );
+      }
+      
+      // Load any followers
+      const savedFollowers = localStorage.getItem('followers');
+      if (savedFollowers) {
+        const followerIds = JSON.parse(savedFollowers);
+        setFollowers(
+          demoUsers.filter(u => followerIds.includes(u.id))
         );
       }
       
@@ -177,6 +226,9 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setCurrentUser(newUser);
     localStorage.setItem('currentUser', JSON.stringify(newUser));
     localStorage.setItem('following', JSON.stringify([]));
+    localStorage.setItem('followers', JSON.stringify([]));
+    setFollowingUsers([]);
+    setFollowers([]);
     
     toast.success("Account created successfully!");
     return true;
@@ -210,6 +262,12 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.setItem('following', JSON.stringify(followingIds));
     }
     
+    // Simulate the other user following back 50% of the time for demo purposes
+    if (Math.random() > 0.5 && !isFollower(userId)) {
+      addFollower(userId);
+      toast.success(`${userToFollow.name} followed you back!`);
+    }
+    
     toast.success(`You are now following ${userToFollow.name}`);
   };
   
@@ -226,8 +284,31 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
   
+  // Method to add a follower (simulated for the demo)
+  const addFollower = (userId: string) => {
+    const follower = demoUsers.find(u => u.id === userId);
+    if (!follower || followers.some(f => f.id === userId)) return;
+    
+    setFollowers(prev => [...prev, follower]);
+    
+    // Save to localStorage
+    const followerIds = followers.map(f => f.id);
+    if (!followerIds.includes(userId)) {
+      followerIds.push(userId);
+      localStorage.setItem('followers', JSON.stringify(followerIds));
+    }
+  };
+  
   const isFollowing = (userId: string): boolean => {
     return followingUsers.some(user => user.id === userId);
+  };
+  
+  const isFollower = (userId: string): boolean => {
+    return followers.some(user => user.id === userId);
+  };
+  
+  const isMutualFollow = (userId: string): boolean => {
+    return isFollowing(userId) && isFollower(userId);
   };
   
   return (
@@ -236,12 +317,15 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         currentUser, 
         isAuthenticated: !!currentUser,
         followingUsers,
+        followers,
         login, 
         logout,
         register,
         followUser,
         unfollowUser,
-        isFollowing
+        isFollowing,
+        isFollower,
+        isMutualFollow
       }}
     >
       {children}
