@@ -8,6 +8,7 @@ export type User = {
   name: string;
   username: string;
   avatar: string;
+  banner?: string;  // Add the banner property as optional
   isFollowing?: boolean;
   isLive?: boolean;
   bio?: string;

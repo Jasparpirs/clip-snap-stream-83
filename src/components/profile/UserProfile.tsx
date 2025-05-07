@@ -126,12 +126,15 @@ export default function UserProfile() {
     location: "Unknown"
   };
   
+  // Default banner image if not available in user data
+  const defaultBannerImage = "https://images.unsplash.com/photo-1594751684241-bcef0ac9c64d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80";
+  
   return (
     <div className="container py-6">
       {/* Profile Banner */}
       <div className="relative w-full h-48 md:h-64 rounded-md overflow-hidden mb-16">
         <img 
-          src={profileUser.banner || "https://images.unsplash.com/photo-1594751684241-bcef0ac9c64d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80"} 
+          src={profileUser.banner || defaultBannerImage} 
           alt="Profile banner" 
           className="w-full h-full object-cover"
         />
