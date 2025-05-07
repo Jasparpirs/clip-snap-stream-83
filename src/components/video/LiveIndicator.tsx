@@ -1,6 +1,6 @@
 
 import { Badge } from "@/components/ui/badge";
-import { LiveView } from "lucide-react";
+import { Radio } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface LiveIndicatorProps {
@@ -16,7 +16,7 @@ export default function LiveIndicator({ isLive, className }: LiveIndicatorProps)
       variant="destructive" 
       className={cn("flex items-center gap-1 animate-pulse", className)}
     >
-      <LiveView className="h-3 w-3" />
+      <Radio className="h-3 w-3" />
       LIVE
     </Badge>
   );

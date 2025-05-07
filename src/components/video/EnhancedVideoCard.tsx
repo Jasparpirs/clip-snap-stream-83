@@ -3,7 +3,7 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Video as VideoType } from "@/contexts/UserContext";
-import { LiveView, Video } from "lucide-react";
+import { Video, Radio } from "lucide-react";
 
 interface VideoCardProps {
   video: VideoType;
@@ -20,7 +20,7 @@ export default function EnhancedVideoCard({ video }: VideoCardProps) {
         />
         {video.isLive && (
           <Badge variant="destructive" className="absolute top-2 left-2 flex items-center gap-1">
-            <LiveView className="h-3 w-3" />
+            <Radio className="h-3 w-3 animate-pulse" />
             LIVE
           </Badge>
         )}

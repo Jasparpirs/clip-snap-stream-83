@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { toast } from "sonner";
 import { useUser } from "@/contexts/UserContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Upload, Video, LiveView } from "lucide-react";
+import { Upload, Video, Radio } from "lucide-react";
 
 interface VideoUploadProps {
   onVideoUploaded?: () => void;
@@ -114,7 +114,7 @@ export default function VideoUpload({ onVideoUploaded }: VideoUploadProps) {
               Video
             </TabsTrigger>
             <TabsTrigger value="live" className="flex items-center gap-2">
-              <LiveView className="h-4 w-4" />
+              <Radio className="h-4 w-4" />
               Go Live
             </TabsTrigger>
           </TabsList>
@@ -149,7 +149,7 @@ export default function VideoUpload({ onVideoUploaded }: VideoUploadProps) {
             
             <TabsContent value="live" className="space-y-4">
               <div className="p-4 bg-secondary/50 rounded-md text-center">
-                <LiveView className="h-10 w-10 mx-auto mb-2 text-primary" />
+                <Radio className="h-10 w-10 mx-auto mb-2 text-primary" />
                 <p className="font-medium">Ready to Start Streaming</p>
                 <p className="text-sm text-muted-foreground">
                   Your stream will be public once you click "Go Live"
