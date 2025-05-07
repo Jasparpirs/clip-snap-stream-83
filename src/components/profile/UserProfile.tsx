@@ -5,10 +5,9 @@ import VideoCard from "../video/VideoCard";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { MessageCircle, User } from "lucide-react";
 import { useUser } from "@/contexts/UserContext";
-import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
+import LoginModal from "@/components/auth/LoginModal";
 
-// Sample videos for this user - these will be updated with the user's real videos in a real application
+// Sample videos for this user
 const userVideos = [
   {
     id: "u1",
@@ -17,8 +16,8 @@ const userVideos = [
     views: "1.8M views",
     timestamp: "1 week ago",
     user: {
-      name: "",
-      avatar: ""
+      name: "Jessica Williams",
+      avatar: "https://i.pravatar.cc/300?img=25"
     }
   },
   {
@@ -28,8 +27,8 @@ const userVideos = [
     views: "954K views",
     timestamp: "3 weeks ago",
     user: {
-      name: "",
-      avatar: ""
+      name: "Jessica Williams",
+      avatar: "https://i.pravatar.cc/300?img=25"
     }
   },
   {
@@ -39,102 +38,43 @@ const userVideos = [
     views: "2.4M views",
     timestamp: "1 month ago",
     user: {
-      name: "",
-      avatar: ""
+      name: "Jessica Williams",
+      avatar: "https://i.pravatar.cc/300?img=25"
     }
   }
 ];
 
 export default function UserProfile() {
-  const { currentUser } = useUser();
-  const [followersCount, setFollowersCount] = useState(0);
-  const [followingCount, setFollowingCount] = useState(0);
-  const [likesCount, setLikesCount] = useState("0");
-  const [videos, setVideos] = useState(userVideos);
+  const { isAuthenticated, isFollowing, followUser, unfollowUser } = useUser();
   
-  useEffect(() => {
-    if (!currentUser?.id) return;
-    
-    // Update videos with current user info
-    const updatedVideos = userVideos.map(video => ({
-      ...video,
-      user: {
-        name: currentUser.name,
-        avatar: currentUser.avatar
-      }
-    }));
-    
-    setVideos(updatedVideos);
-    
-    // Get follower count
-    const fetchFollowCounts = async () => {
-      try {
-        const { count: followers } = await supabase
-          .from('followers')
-          .select('*', { count: 'exact', head: true })
-          .eq('followed_id', currentUser.id);
-          
-        const { count: following } = await supabase
-          .from('followers')
-          .select('*', { count: 'exact', head: true })
-          .eq('follower_id', currentUser.id);
-          
-        setFollowersCount(followers || 0);
-        setFollowingCount(following || 0);
-      } catch (error) {
-        console.error('Error fetching follow counts:', error);
-        // Fall back to demo data if supabase isn't connected
-        if (currentUser.followers) {
-          setFollowersCount(parseInt(currentUser.followers.replace(/[^0-9]/g, '')) || 0);
-        }
-        if (currentUser.following) {
-          setFollowingCount(parseInt(currentUser.following.replace(/[^0-9]/g, '')) || 0);
-        }
-      }
-    };
-    
-    fetchFollowCounts();
-    
-    // Try to subscribe to changes in followers
-    try {
-      const followersSubscription = supabase
-        .channel('followers-changes')
-        .on('postgres_changes', 
-          { event: '*', schema: 'public', table: 'followers', filter: `followed_id=eq.${currentUser.id}` }, 
-          payload => {
-            console.log('Followers change detected:', payload);
-            fetchFollowCounts();
-          })
-        .subscribe();
-        
-      return () => {
-        supabase.removeChannel(followersSubscription);
-      };
-    } catch (error) {
-      console.error('Error setting up subscription:', error);
-      // Continue without subscription if Supabase is not properly connected
-    }
-  }, [currentUser?.id]);
-  
-  // Use current user data or fallback to demo data if not authenticated
-  const profileUser = currentUser || {
-    id: "demo",
-    name: "Guest User",
-    username: "@guest",
-    avatar: "https://i.pravatar.cc/300?img=25", 
-    bio: "Please login to view your profile",
-    location: "Unknown"
+  // Sample profile data - in a real app this would come from API
+  const profileUser = {
+    id: "u1",
+    name: "Jessica Williams",
+    username: "@jessicawill",
+    avatar: "https://i.pravatar.cc/300?img=25",
+    banner: "https://images.unsplash.com/photo-1594751684241-bcef0ac9c64d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80",
+    bio: "Digital creator | Travel enthusiast | Making content that inspires",
+    followers: "1.2M",
+    following: "345",
+    likes: "18.5M",
+    location: "Los Angeles, CA"
   };
   
-  // Default banner image if not available in user data
-  const defaultBannerImage = "https://images.unsplash.com/photo-1594751684241-bcef0ac9c64d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80";
-  
+  const handleFollowClick = () => {
+    followUser(profileUser.id);
+  };
+
+  const handleUnfollowClick = () => {
+    unfollowUser(profileUser.id);
+  };
+
   return (
     <div className="container py-6">
       {/* Profile Banner */}
       <div className="relative w-full h-48 md:h-64 rounded-md overflow-hidden mb-16">
         <img 
-          src={profileUser.banner || defaultBannerImage} 
+          src={profileUser.banner} 
           alt="Profile banner" 
           className="w-full h-full object-cover"
         />
@@ -156,27 +96,37 @@ export default function UserProfile() {
         
         <div className="flex items-center justify-center space-x-8 mt-4">
           <div className="text-center">
-            <p className="font-bold">{followersCount}</p>
+            <p className="font-bold">{profileUser.followers}</p>
             <p className="text-sm text-muted-foreground">Followers</p>
           </div>
           <div className="text-center">
-            <p className="font-bold">{followingCount}</p>
+            <p className="font-bold">{profileUser.following}</p>
             <p className="text-sm text-muted-foreground">Following</p>
           </div>
           <div className="text-center">
-            <p className="font-bold">{profileUser.likes || "0"}</p>
+            <p className="font-bold">{profileUser.likes}</p>
             <p className="text-sm text-muted-foreground">Likes</p>
           </div>
         </div>
         
         <div className="flex justify-center mt-6 space-x-4">
-          <Button variant="outline">
-            Edit Profile
-          </Button>
-          <Button variant="outline">
-            <MessageCircle className="mr-2 h-4 w-4" />
-            Messages
-          </Button>
+          {isAuthenticated ? (
+            <>
+              {isFollowing(profileUser.id) ? (
+                <Button variant="outline" onClick={handleUnfollowClick}>Unfollow</Button>
+              ) : (
+                <Button onClick={handleFollowClick}>Follow</Button>
+              )}
+              <Button variant="outline">
+                <MessageCircle className="mr-2 h-4 w-4" />
+                Message
+              </Button>
+            </>
+          ) : (
+            <LoginModal 
+              trigger={<Button>Follow</Button>} 
+            />
+          )}
         </div>
       </div>
       
@@ -190,7 +140,7 @@ export default function UserProfile() {
         
         <TabsContent value="videos" className="mt-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {videos.map((video) => (
+            {userVideos.map((video) => (
               <VideoCard key={video.id} video={video} />
             ))}
           </div>
@@ -224,10 +174,10 @@ export default function UserProfile() {
               <div>
                 <h3 className="text-lg font-medium mb-2">About</h3>
                 <p>
-                  {currentUser ? 
-                    `Hey there! I'm ${profileUser.name}, a digital creator passionate about sharing my interests and connecting with others.` : 
-                    "Please login to view your profile information."
-                  }
+                  Hey there! I'm Jessica, a digital creator passionate about travel, fashion, and lifestyle content.
+                  I started my journey in 2020 and have been blessed to work with amazing brands and connect with
+                  incredible people around the world. My goal is to inspire you to explore new places, try new things,
+                  and live your best life!
                 </p>
               </div>
             </div>
