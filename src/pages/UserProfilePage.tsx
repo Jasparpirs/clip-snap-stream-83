@@ -5,6 +5,7 @@ import { useUser, User } from "@/contexts/UserContext";
 import MainLayout from "@/components/layout/MainLayout";
 import OtherUserProfile from "@/components/profile/OtherUserProfile";
 import { toast } from "sonner";
+import { supabase } from "@/lib/supabaseClient";
 
 const UserProfilePage = () => {
   const { userId } = useParams<{ userId: string }>();
@@ -116,22 +117,41 @@ const UserProfilePage = () => {
   ];
 
   useEffect(() => {
-    if (userId) {
-      // In a real app, this would be an API call
+    if (!userId) return;
+    
+    const fetchUser = async () => {
       setLoading(true);
       
-      setTimeout(() => {
-        const user = demoUsers.find(u => u.id === userId);
-        
-        if (user) {
-          setUserProfile(user);
+      try {
+        // Try to fetch from Supabase
+        const { data: user, error } = await supabase
+          .from("users")
+          .select("*")
+          .eq("id", userId)
+          .single();
+          
+        if (error || !user) {
+          // Fall back to demo data
+          const demoUser = demoUsers.find(u => u.id === userId);
+          
+          if (demoUser) {
+            setUserProfile(demoUser);
+          } else {
+            toast.error("User not found");
+            setUserProfile(null);
+          }
         } else {
-          toast.error("User not found");
+          setUserProfile(user);
         }
-        
+      } catch (error) {
+        console.error("Error fetching user:", error);
+        toast.error("Failed to load user data");
+      } finally {
         setLoading(false);
-      }, 500); // Simulate API delay
-    }
+      }
+    };
+    
+    fetchUser();
   }, [userId]);
   
   if (loading) {
