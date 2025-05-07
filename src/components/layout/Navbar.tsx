@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Menu, Search, Bell, MessageCircle } from "lucide-react";
+import ThemeSelector from "../ThemeSelector";
 
 interface NavbarProps {
   onMenuClick: () => void;
@@ -27,12 +28,13 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input 
               placeholder="Search videos, people, or channels" 
-              className="pl-8 bg-secondary"
+              className="pl-8 bg-secondary/60"
             />
           </div>
         </div>
         
         <div className="flex items-center space-x-4">
+          <ThemeSelector />
           <Button variant="ghost" size="icon" className="text-muted-foreground">
             <Bell className="h-5 w-5" />
             <span className="sr-only">Notifications</span>

@@ -56,12 +56,12 @@ export default function VideoCard({ video, layout = "grid" }: VideoCardProps) {
 
   return (
     <Card className={cn(
-      "border-none bg-transparent overflow-hidden transition-all duration-200 hover:scale-[1.01]",
+      "border-none bg-background/60 overflow-hidden rounded-xl",
       layout === "feed" ? "flex flex-col md:flex-row gap-4" : ""
     )}>
       <div 
         className={cn(
-          "relative overflow-hidden group rounded-md",
+          "relative overflow-hidden group rounded-lg",
           layout === "grid" ? "aspect-video w-full" : "aspect-video md:w-[300px]"
         )}
         onMouseEnter={() => setIsHovering(true)}
@@ -80,7 +80,7 @@ export default function VideoCard({ video, layout = "grid" }: VideoCardProps) {
           )}
           onClick={handlePlay}
         >
-          <Button size="icon" variant="outline" className="rounded-full bg-primary/80 border-none animate-pulse">
+          <Button size="icon" variant="secondary" className="rounded-full bg-primary/80 border-none animate-pulse">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
           </Button>
         </div>
@@ -114,7 +114,7 @@ export default function VideoCard({ video, layout = "grid" }: VideoCardProps) {
             variant="ghost" 
             size="sm" 
             className={cn(
-              "text-muted-foreground transition-all duration-200", 
+              "text-muted-foreground rounded-full transition-all duration-200", 
               liked ? "text-primary" : ""
             )}
             onClick={handleLike}
@@ -123,13 +123,13 @@ export default function VideoCard({ video, layout = "grid" }: VideoCardProps) {
             <span>{likeCount}</span>
           </Button>
           
-          <Button variant="ghost" size="sm" className="text-muted-foreground" onClick={handleComment}>
+          <Button variant="ghost" size="sm" className="text-muted-foreground rounded-full" onClick={handleComment}>
             <MessageCircle className="mr-1 h-4 w-4" />
             <span>{Math.floor(Math.random() * 200)}</span>
           </Button>
         </div>
         
-        <Button variant="ghost" size="sm" className="text-muted-foreground" onClick={handleShare}>
+        <Button variant="ghost" size="sm" className="text-muted-foreground rounded-full" onClick={handleShare}>
           <Share className="mr-1 h-4 w-4" />
           <span>Share</span>
         </Button>

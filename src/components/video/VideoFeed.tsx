@@ -2,6 +2,9 @@
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import VideoCard from "./VideoCard";
+import { Button } from "../ui/button";
+import { LayoutGrid, LayoutList } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 // Sample video data
 const videos = [
@@ -77,10 +80,10 @@ export default function VideoFeed() {
   const [layout, setLayout] = useState<"grid" | "feed">("grid");
 
   return (
-    <div className="container py-6">
+    <div className="content-container py-6">
       <Tabs defaultValue="for-you" className="mb-6">
         <div className="flex justify-between items-center">
-          <TabsList>
+          <TabsList className="glass-effect">
             <TabsTrigger value="for-you">For You</TabsTrigger>
             <TabsTrigger value="trending">Trending</TabsTrigger>
             <TabsTrigger value="live">Live</TabsTrigger>
@@ -89,46 +92,54 @@ export default function VideoFeed() {
           <div className="flex space-x-2">
             <Button
               variant={layout === "grid" ? "default" : "outline"}
-              size="sm"
+              size="icon"
               onClick={() => setLayout("grid")}
+              className={cn("rounded-full", layout === "grid" ? "bg-primary" : "")}
             >
-              Grid
+              <LayoutGrid className="h-4 w-4" />
+              <span className="sr-only">Grid view</span>
             </Button>
             <Button
               variant={layout === "feed" ? "default" : "outline"}
-              size="sm"
+              size="icon"
               onClick={() => setLayout("feed")}
+              className={cn("rounded-full", layout === "feed" ? "bg-primary" : "")}
             >
-              Feed
+              <LayoutList className="h-4 w-4" />
+              <span className="sr-only">List view</span>
             </Button>
           </div>
         </div>
         
-        <TabsContent value="for-you" className="mt-4">
+        <TabsContent value="for-you" className="mt-6">
           <div className={layout === "grid" 
-            ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" 
+            ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" 
             : "space-y-6"
           }>
             {videos.map((video) => (
-              <VideoCard key={video.id} video={video} layout={layout} />
+              <div key={video.id} className="video-card-hover">
+                <VideoCard video={video} layout={layout} />
+              </div>
             ))}
           </div>
         </TabsContent>
         
-        <TabsContent value="trending" className="mt-4">
+        <TabsContent value="trending" className="mt-6">
           <div className={layout === "grid" 
-            ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" 
+            ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" 
             : "space-y-6"
           }>
             {/* Show some different videos in the trending tab */}
             {videos.slice().reverse().map((video) => (
-              <VideoCard key={video.id} video={video} layout={layout} />
+              <div key={video.id} className="video-card-hover">
+                <VideoCard video={video} layout={layout} />
+              </div>
             ))}
           </div>
         </TabsContent>
         
-        <TabsContent value="live" className="mt-4">
-          <div className="text-center py-12">
+        <TabsContent value="live" className="mt-6">
+          <div className="text-center py-12 glass-effect rounded-xl">
             <h3 className="text-2xl font-semibold mb-2">Live streams coming soon!</h3>
             <p className="text-muted-foreground">
               We're working on bringing live streams to ClipSnap. Stay tuned!
@@ -139,6 +150,3 @@ export default function VideoFeed() {
     </div>
   );
 }
-
-// Import Button since it's used in this file
-import { Button } from "../ui/button";
