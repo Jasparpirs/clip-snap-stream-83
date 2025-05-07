@@ -1,9 +1,8 @@
-
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { Video as VideoType } from "@/contexts/UserContext";
-import { Video, Radio } from "lucide-react";
+import { Video } from "lucide-react";
+import LiveIndicator from "./LiveIndicator";
 
 interface VideoCardProps {
   video: VideoType;
@@ -19,10 +18,9 @@ export default function EnhancedVideoCard({ video }: VideoCardProps) {
           className="w-full h-full object-cover transition-transform hover:scale-105"
         />
         {video.isLive && (
-          <Badge variant="destructive" className="absolute top-2 left-2 flex items-center gap-1">
-            <Radio className="h-3 w-3 animate-pulse" />
-            LIVE
-          </Badge>
+          <div className="absolute top-2 left-2">
+            <LiveIndicator isLive={video.isLive} />
+          </div>
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 hover:opacity-100 transition-opacity flex items-end justify-start p-4">
           <div className="text-white">

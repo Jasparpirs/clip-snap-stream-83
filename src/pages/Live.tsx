@@ -1,6 +1,7 @@
 
 import MainLayout from "@/components/layout/MainLayout";
-import { Radio } from "lucide-react";
+import { Radio, Activity } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 const Live = () => {
   return (
@@ -11,10 +12,13 @@ const Live = () => {
           We're working on bringing live streams to ClipSnap. Stay tuned!
         </p>
         <div className="p-12 border border-dashed border-muted-foreground/50 rounded-md max-w-lg mx-auto">
-          <Radio 
-            size={64}
-            className="mx-auto mb-6 text-muted-foreground"
-          />
+          <div className="relative mx-auto w-16 h-16 mb-6">
+            <Radio 
+              size={64}
+              className="text-muted-foreground"
+            />
+            <Badge variant="destructive" className="absolute -top-2 -right-2 animate-pulse">LIVE</Badge>
+          </div>
           <p className="text-muted-foreground">
             Live streaming functionality will be available soon.
             <br />Check back for updates!
