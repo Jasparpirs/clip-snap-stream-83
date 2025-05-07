@@ -7,31 +7,64 @@ import { MessageCircle, User } from "lucide-react";
 import { useUser } from "@/contexts/UserContext";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import EditProfileForm from "./EditProfileForm";
-import VideoUpload from "../video/VideoUpload";
+
+// Sample videos for this user - these will be updated with the user's real videos in a real application
+const userVideos = [
+  {
+    id: "u1",
+    title: "A day in my life as a content creator",
+    thumbnail: "https://images.unsplash.com/photo-1497032628192-86f99bcd76bc?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80",
+    views: "1.8M views",
+    timestamp: "1 week ago",
+    user: {
+      name: "",
+      avatar: ""
+    }
+  },
+  {
+    id: "u2",
+    title: "5 tips to grow your social media in 2025",
+    thumbnail: "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1074&q=80",
+    views: "954K views",
+    timestamp: "3 weeks ago",
+    user: {
+      name: "",
+      avatar: ""
+    }
+  },
+  {
+    id: "u3",
+    title: "Exploring hidden beaches in Bali | Travel vlog",
+    thumbnail: "https://images.unsplash.com/photo-1537953773345-d172ccf13cf1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=735&q=80",
+    views: "2.4M views",
+    timestamp: "1 month ago",
+    user: {
+      name: "",
+      avatar: ""
+    }
+  }
+];
 
 export default function UserProfile() {
-  const { currentUser, getUserVideos } = useUser();
+  const { currentUser } = useUser();
   const [followersCount, setFollowersCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
   const [likesCount, setLikesCount] = useState("0");
-  const [videos, setVideos] = useState(getUserVideos());
-  const [refreshKey, setRefreshKey] = useState(0);
-  
-  // Handler to refresh the profile after updates
-  const handleProfileRefresh = () => {
-    setRefreshKey(prev => prev + 1);
-  };
-  
-  // Handler for when a video is uploaded
-  const handleVideoUploaded = () => {
-    setVideos(getUserVideos());
-  };
+  const [videos, setVideos] = useState(userVideos);
   
   useEffect(() => {
     if (!currentUser?.id) return;
     
-    setVideos(getUserVideos());
+    // Update videos with current user info
+    const updatedVideos = userVideos.map(video => ({
+      ...video,
+      user: {
+        name: currentUser.name,
+        avatar: currentUser.avatar
+      }
+    }));
+    
+    setVideos(updatedVideos);
     
     // Get follower count
     const fetchFollowCounts = async () => {
@@ -81,7 +114,7 @@ export default function UserProfile() {
       console.error('Error setting up subscription:', error);
       // Continue without subscription if Supabase is not properly connected
     }
-  }, [currentUser?.id, refreshKey]);
+  }, [currentUser?.id]);
   
   // Use current user data or fallback to demo data if not authenticated
   const profileUser = currentUser || {
@@ -137,17 +170,13 @@ export default function UserProfile() {
         </div>
         
         <div className="flex justify-center mt-6 space-x-4">
-          {currentUser && (
-            <>
-              <EditProfileForm onProfileUpdate={handleProfileRefresh} />
-              <VideoUpload onVideoUploaded={handleVideoUploaded} />
-            </>
-          )}
-          {!currentUser && (
-            <Button variant="outline">
-              Login to Edit Profile
-            </Button>
-          )}
+          <Button variant="outline">
+            Edit Profile
+          </Button>
+          <Button variant="outline">
+            <MessageCircle className="mr-2 h-4 w-4" />
+            Messages
+          </Button>
         </div>
       </div>
       
@@ -160,19 +189,11 @@ export default function UserProfile() {
         </TabsList>
         
         <TabsContent value="videos" className="mt-6">
-          {videos && videos.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {videos.map((video) => (
-                <VideoCard key={video.id} video={video} />
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-10 bg-secondary/20 rounded-lg">
-              <h3 className="text-xl font-medium mb-2">No videos yet</h3>
-              <p className="text-muted-foreground mb-6">Upload your first video to get started</p>
-              {currentUser && <VideoUpload onVideoUploaded={handleVideoUploaded} />}
-            </div>
-          )}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {videos.map((video) => (
+              <VideoCard key={video.id} video={video} />
+            ))}
+          </div>
         </TabsContent>
         
         <TabsContent value="shorts" className="mt-6">

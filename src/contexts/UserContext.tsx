@@ -1,29 +1,14 @@
+
 import React, { createContext, useState, useContext, useEffect } from "react";
 import { toast } from "sonner";
-import { supabase } from "@/lib/supabaseClient";
 
 // Define user and following types
-export type Video = {
-  id: string;
-  title: string;
-  description?: string;
-  thumbnail: string;
-  videoUrl?: string;
-  views: string;
-  timestamp: string;
-  isLive?: boolean;
-  user: {
-    name: string;
-    avatar: string;
-  }
-};
-
 export type User = {
   id: string;
   name: string;
   username: string;
   avatar: string;
-  banner?: string;  // Banner image URL
+  banner?: string;  // Add the banner property as optional
   isFollowing?: boolean;
   isLive?: boolean;
   bio?: string;
@@ -35,15 +20,6 @@ export type User = {
   timestamp?: string;
   unread?: boolean;
   online?: boolean;
-  videos?: Video[];
-};
-
-type UserProfileUpdate = {
-  name: string;
-  bio?: string;
-  location?: string;
-  avatar?: string;
-  banner?: string;
 };
 
 type UserContextType = {
@@ -59,9 +35,6 @@ type UserContextType = {
   isFollowing: (userId: string) => boolean;
   isFollower: (userId: string) => boolean;
   isMutualFollow: (userId: string) => boolean;
-  updateUserProfile: (data: UserProfileUpdate) => Promise<boolean>;
-  addUserVideo: (video: Video) => Promise<boolean>;
-  getUserVideos: (userId?: string) => Video[];
 };
 
 const UserContext = createContext<UserContextType>({
@@ -77,9 +50,6 @@ const UserContext = createContext<UserContextType>({
   isFollowing: () => false,
   isFollower: () => false,
   isMutualFollow: () => false,
-  updateUserProfile: () => Promise.resolve(false),
-  addUserVideo: () => Promise.resolve(false),
-  getUserVideos: () => [],
 });
 
 // Demo users for local testing
@@ -170,53 +140,10 @@ const demoUsers: User[] = [
   }
 ];
 
-// Demo videos
-const demoVideos: { [userId: string]: Video[] } = {
-  "u1": [
-    {
-      id: "vid-1",
-      title: "A day in my life as a content creator",
-      description: "Follow me around as I create content and share my creative process!",
-      thumbnail: "https://images.unsplash.com/photo-1497032628192-86f99bcd76bc?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80",
-      views: "1.8M views",
-      timestamp: "1 week ago",
-      user: {
-        name: "Jessica Williams",
-        avatar: "https://i.pravatar.cc/300?img=25"
-      }
-    },
-    {
-      id: "vid-2",
-      title: "5 tips to grow your social media in 2025",
-      description: "Learn how to grow your social media presence with these proven tips!",
-      thumbnail: "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1074&q=80",
-      views: "954K views",
-      timestamp: "3 weeks ago",
-      user: {
-        name: "Jessica Williams",
-        avatar: "https://i.pravatar.cc/300?img=25"
-      }
-    },
-    {
-      id: "vid-3",
-      title: "Exploring hidden beaches in Bali | Travel vlog",
-      description: "Join me as I discover the most beautiful hidden beaches in Bali!",
-      thumbnail: "https://images.unsplash.com/photo-1537953773345-d172ccf13cf1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=735&q=80",
-      views: "2.4M views",
-      timestamp: "1 month ago",
-      user: {
-        name: "Jessica Williams",
-        avatar: "https://i.pravatar.cc/300?img=25"
-      }
-    }
-  ]
-};
-
 export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [followingUsers, setFollowingUsers] = useState<User[]>([]);
   const [followers, setFollowers] = useState<User[]>([]);
-  const [userVideos, setUserVideos] = useState<{ [userId: string]: Video[] }>(demoVideos);
   
   // Load user data from localStorage on component mount
   useEffect(() => {
@@ -240,16 +167,6 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setFollowers(
           demoUsers.filter(user => followerIds.includes(user.id))
         );
-      }
-    }
-    
-    // Load videos from localStorage if available
-    const savedVideos = localStorage.getItem('userVideos');
-    if (savedVideos) {
-      try {
-        setUserVideos(JSON.parse(savedVideos));
-      } catch (error) {
-        console.error("Error parsing saved videos:", error);
       }
     }
   }, []);
@@ -395,69 +312,6 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return isFollowing(userId) && isFollower(userId);
   };
   
-  const updateUserProfile = async (data: UserProfileUpdate): Promise<boolean> => {
-    if (!currentUser) return false;
-    
-    try {
-      // Try to update in Supabase if available
-      try {
-        await supabase
-          .from('users')
-          .update(data)
-          .eq('id', currentUser.id);
-      } catch (error) {
-        console.log("Supabase update failed, updating locally", error);
-      }
-      
-      // Update locally regardless
-      const updatedUser = { ...currentUser, ...data };
-      setCurrentUser(updatedUser);
-      localStorage.setItem('currentUser', JSON.stringify(updatedUser));
-      return true;
-    } catch (error) {
-      console.error("Error updating user profile:", error);
-      return false;
-    }
-  };
-  
-  const addUserVideo = async (video: Video): Promise<boolean> => {
-    if (!currentUser) return false;
-    
-    try {
-      // Try to add to Supabase if available
-      try {
-        await supabase
-          .from('videos')
-          .insert([{ ...video, user_id: currentUser.id }]);
-      } catch (error) {
-        console.log("Supabase video insert failed, updating locally", error);
-      }
-      
-      // Update locally regardless
-      const userId = currentUser.id;
-      const updatedVideos = { ...userVideos };
-      
-      if (!updatedVideos[userId]) {
-        updatedVideos[userId] = [];
-      }
-      
-      updatedVideos[userId] = [video, ...updatedVideos[userId]];
-      setUserVideos(updatedVideos);
-      localStorage.setItem('userVideos', JSON.stringify(updatedVideos));
-      return true;
-    } catch (error) {
-      console.error("Error adding video:", error);
-      return false;
-    }
-  };
-  
-  const getUserVideos = (userId?: string): Video[] => {
-    const id = userId || currentUser?.id;
-    if (!id) return [];
-    
-    return userVideos[id] || [];
-  };
-  
   return (
     <UserContext.Provider 
       value={{ 
@@ -472,10 +326,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         unfollowUser,
         isFollowing,
         isFollower,
-        isMutualFollow,
-        updateUserProfile,
-        addUserVideo,
-        getUserVideos
+        isMutualFollow
       }}
     >
       {children}
