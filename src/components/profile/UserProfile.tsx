@@ -4,8 +4,19 @@ import { Button } from "@/components/ui/button";
 import VideoCard from "../video/VideoCard";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { MessageCircle, User } from "lucide-react";
-import { useUser } from "@/contexts/UserContext";
-import LoginModal from "@/components/auth/LoginModal";
+
+// Sample data for user profile
+const profileUser = {
+  name: "Jessica Williams",
+  username: "@jessicawill",
+  avatar: "https://i.pravatar.cc/300?img=25",
+  banner: "https://images.unsplash.com/photo-1594751684241-bcef0ac9c64d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80",
+  bio: "Digital creator | Travel enthusiast | Making content that inspires",
+  followers: "1.2M",
+  following: "345",
+  likes: "18.5M",
+  location: "Los Angeles, CA"
+};
 
 // Sample videos for this user
 const userVideos = [
@@ -16,8 +27,8 @@ const userVideos = [
     views: "1.8M views",
     timestamp: "1 week ago",
     user: {
-      name: "Jessica Williams",
-      avatar: "https://i.pravatar.cc/300?img=25"
+      name: profileUser.name,
+      avatar: profileUser.avatar
     }
   },
   {
@@ -27,8 +38,8 @@ const userVideos = [
     views: "954K views",
     timestamp: "3 weeks ago",
     user: {
-      name: "Jessica Williams",
-      avatar: "https://i.pravatar.cc/300?img=25"
+      name: profileUser.name,
+      avatar: profileUser.avatar
     }
   },
   {
@@ -38,37 +49,13 @@ const userVideos = [
     views: "2.4M views",
     timestamp: "1 month ago",
     user: {
-      name: "Jessica Williams",
-      avatar: "https://i.pravatar.cc/300?img=25"
+      name: profileUser.name,
+      avatar: profileUser.avatar
     }
   }
 ];
 
 export default function UserProfile() {
-  const { isAuthenticated, isFollowing, followUser, unfollowUser } = useUser();
-  
-  // Sample profile data - in a real app this would come from API
-  const profileUser = {
-    id: "u1",
-    name: "Jessica Williams",
-    username: "@jessicawill",
-    avatar: "https://i.pravatar.cc/300?img=25",
-    banner: "https://images.unsplash.com/photo-1594751684241-bcef0ac9c64d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80",
-    bio: "Digital creator | Travel enthusiast | Making content that inspires",
-    followers: "1.2M",
-    following: "345",
-    likes: "18.5M",
-    location: "Los Angeles, CA"
-  };
-  
-  const handleFollowClick = () => {
-    followUser(profileUser.id);
-  };
-
-  const handleUnfollowClick = () => {
-    unfollowUser(profileUser.id);
-  };
-
   return (
     <div className="container py-6">
       {/* Profile Banner */}
@@ -110,23 +97,11 @@ export default function UserProfile() {
         </div>
         
         <div className="flex justify-center mt-6 space-x-4">
-          {isAuthenticated ? (
-            <>
-              {isFollowing(profileUser.id) ? (
-                <Button variant="outline" onClick={handleUnfollowClick}>Unfollow</Button>
-              ) : (
-                <Button onClick={handleFollowClick}>Follow</Button>
-              )}
-              <Button variant="outline">
-                <MessageCircle className="mr-2 h-4 w-4" />
-                Message
-              </Button>
-            </>
-          ) : (
-            <LoginModal 
-              trigger={<Button>Follow</Button>} 
-            />
-          )}
+          <Button>Follow</Button>
+          <Button variant="outline">
+            <MessageCircle className="mr-2 h-4 w-4" />
+            Message
+          </Button>
         </div>
       </div>
       
