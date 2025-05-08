@@ -63,6 +63,40 @@ const mockSearchData: SearchResult[] = [
       avatar: "https://i.pravatar.cc/300?img=25"
     }
   },
+  {
+    id: "s5",
+    title: "Gaming with Alex",
+    type: "video",
+    thumbnail: "https://images.unsplash.com/photo-1511512578047-dfb367046420?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=870&q=80",
+    views: "405K views",
+    timestamp: "1 week ago",
+    platform: "youtube",
+    user: {
+      name: "Alex Gaming",
+      avatar: "https://i.pravatar.cc/150?img=15"
+    }
+  },
+  {
+    id: "s6",
+    title: "Sarah Johnson",
+    type: "user",
+    platform: "snapchat",
+    user: {
+      name: "Sarah Johnson",
+      avatar: "https://i.pravatar.cc/150?img=20"
+    }
+  },
+  {
+    id: "s7",
+    title: "Cooking Masterclass",
+    type: "channel",
+    platform: "twitch",
+    thumbnail: "https://i.pravatar.cc/150?img=22",
+    user: {
+      name: "Chef Michael",
+      avatar: "https://i.pravatar.cc/150?img=22"
+    }
+  },
 ];
 
 // Function to search through mock data
@@ -72,10 +106,13 @@ export const searchContent = async (query: string): Promise<SearchResult[]> => {
   
   if (!query.trim()) return [];
   
-  // Filter mock data based on query
+  // Filter mock data based on query - more flexible matching
   const lowercaseQuery = query.toLowerCase();
   return mockSearchData.filter(item => 
     item.title.toLowerCase().includes(lowercaseQuery) || 
-    item.user?.name.toLowerCase().includes(lowercaseQuery)
+    item.user?.name.toLowerCase().includes(lowercaseQuery) ||
+    // Match by first letter of words for more flexible search
+    item.title.split(' ').some(word => word.toLowerCase()[0] === lowercaseQuery[0]) ||
+    (item.user?.name && item.user.name.split(' ').some(word => word.toLowerCase()[0] === lowercaseQuery[0]))
   );
 };

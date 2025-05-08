@@ -20,10 +20,7 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      // In a real app, we'd navigate to search results
-      console.log(`Searching for: ${searchQuery}`);
-      // Show a toast to indicate search is working
-      alert(`Search results for: ${searchQuery}`);
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
     }
   };
 
@@ -41,7 +38,7 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
           </Button>
           <div className="hidden md:flex">
             <h1 className="font-bold text-xl text-primary">
-              ClipSnap
+              Snipster
               {platformFilter && (
                 <span className="ml-2 text-sm bg-primary/20 px-2 py-0.5 rounded-full">
                   {platformFilter.charAt(0).toUpperCase() + platformFilter.slice(1)} Only

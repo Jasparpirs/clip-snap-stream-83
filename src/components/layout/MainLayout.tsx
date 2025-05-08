@@ -5,6 +5,11 @@ import Sidebar from "./Sidebar";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/contexts/ThemeContext";
 import { motion } from "framer-motion";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
+import { LogOut } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -15,6 +20,8 @@ export default function MainLayout({ children, withSidebar = true }: MainLayoutP
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const { platformFilter } = useTheme();
   const [isLoaded, setIsLoaded] = useState(false);
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     setIsLoaded(true);
@@ -38,6 +45,12 @@ export default function MainLayout({ children, withSidebar = true }: MainLayoutP
     }
   };
 
+  const handleLogout = () => {
+    logout();
+    toast.success("You have been logged out successfully");
+    navigate("/auth");
+  };
+
   return (
     <div className={cn("min-h-screen flex flex-col bg-background transition-colors duration-500", getBgStyle())}>
       <Navbar onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
@@ -56,6 +69,19 @@ export default function MainLayout({ children, withSidebar = true }: MainLayoutP
         >
           <div className="pb-16">
             {children}
+          </div>
+          
+          {/* Floating logout button */}
+          <div className="fixed bottom-6 right-6">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleLogout}
+              className="rounded-full bg-background/80 backdrop-blur-sm hover:bg-destructive hover:text-white transition-colors"
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              Logout
+            </Button>
           </div>
         </motion.main>
       </div>
