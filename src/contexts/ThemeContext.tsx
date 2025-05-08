@@ -7,6 +7,8 @@ type ThemeContextType = {
   setTheme: (theme: string) => void;
   isDarkMode: boolean;
   toggleDarkMode: () => void;
+  platformFilter: string | null;
+  setPlatformFilter: (platform: string | null) => void;
 };
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -14,6 +16,16 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState("purple");
   const [isDarkMode, setIsDarkMode] = useState(true);
+  const [platformFilter, setPlatformFilter] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Load theme preferences from localStorage if available
+    const savedTheme = localStorage.getItem("preferred-theme");
+    const savedDarkMode = localStorage.getItem("dark-mode");
+    
+    if (savedTheme) setTheme(savedTheme);
+    if (savedDarkMode) setIsDarkMode(savedDarkMode === "true");
+  }, []);
 
   useEffect(() => {
     // Apply theme colors to CSS variables
@@ -21,6 +33,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     if (selectedTheme) {
       document.documentElement.style.setProperty("--primary", selectedTheme.colors.primary);
       document.documentElement.style.setProperty("--accent", selectedTheme.colors.accent);
+      
+      // Save preferences to localStorage
+      localStorage.setItem("preferred-theme", theme);
+      localStorage.setItem("dark-mode", String(isDarkMode));
     }
     
     // Apply color scheme
@@ -38,7 +54,14 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <ThemeContext.Provider value={{ theme, setTheme, isDarkMode, toggleDarkMode }}>
+    <ThemeContext.Provider value={{ 
+      theme, 
+      setTheme, 
+      isDarkMode, 
+      toggleDarkMode, 
+      platformFilter,
+      setPlatformFilter 
+    }}>
       {children}
     </ThemeContext.Provider>
   );
