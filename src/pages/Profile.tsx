@@ -3,6 +3,7 @@ import UserProfile from "@/components/profile/UserProfile";
 import MainLayout from "@/components/layout/MainLayout";
 import { useEffect } from "react";
 import { toast } from "sonner";
+import { motion } from "framer-motion";
 
 const Profile = () => {
   useEffect(() => {
@@ -20,9 +21,13 @@ const Profile = () => {
   
   return (
     <MainLayout>
-      <div className="animate-fade-in">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+      >
         <UserProfile />
-      </div>
+      </motion.div>
     </MainLayout>
   );
 };

@@ -17,6 +17,7 @@ import ClipCreator from "./pages/ClipCreator";
 import MultiStream from "./pages/MultiStream";
 import CreatorDashboard from "./pages/CreatorDashboard";
 import WatchParty from "./pages/WatchParty";
+import SearchResults from "./pages/SearchResults";
 
 const queryClient = new QueryClient();
 
@@ -39,6 +40,7 @@ const App = () => (
             <Route path="/multi-stream" element={<MultiStream />} />
             <Route path="/creator-dashboard" element={<CreatorDashboard />} />
             <Route path="/watch-party" element={<WatchParty />} />
+            <Route path="/search" element={<SearchResults />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

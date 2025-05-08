@@ -1,9 +1,10 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Navbar from "./Navbar";
 import Sidebar from "./Sidebar";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/contexts/ThemeContext";
+import { motion } from "framer-motion";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -13,6 +14,11 @@ interface MainLayoutProps {
 export default function MainLayout({ children, withSidebar = true }: MainLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const { platformFilter } = useTheme();
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    setIsLoaded(true);
+  }, []);
 
   // Apply different background styling based on platform filter
   const getBgStyle = () => {
@@ -33,20 +39,25 @@ export default function MainLayout({ children, withSidebar = true }: MainLayoutP
   };
 
   return (
-    <div className={cn("min-h-screen flex flex-col bg-background", getBgStyle())}>
+    <div className={cn("min-h-screen flex flex-col bg-background transition-colors duration-500", getBgStyle())}>
       <Navbar onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
       <div className="flex flex-1 relative">
         {withSidebar && (
           <Sidebar isOpen={sidebarOpen} />
         )}
-        <main className={cn(
-          "flex-1 transition-all duration-300 ease-in-out",
-          withSidebar && sidebarOpen ? "ml-0 md:ml-64" : "ml-0"
-        )}>
+        <motion.main 
+          initial={{ opacity: 0, y: 20 }}
+          animate={isLoaded ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.5 }}
+          className={cn(
+            "flex-1 transition-all duration-300 ease-in-out",
+            withSidebar && sidebarOpen ? "ml-0 md:ml-64" : "ml-0"
+          )}
+        >
           <div className="pb-16">
             {children}
           </div>
-        </main>
+        </motion.main>
       </div>
     </div>
   );
