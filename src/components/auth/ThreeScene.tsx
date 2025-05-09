@@ -1,9 +1,23 @@
 
 import { useRef, useEffect } from 'react';
+import * as THREE from 'three';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { useGLTF, OrbitControls, Text, Float } from '@react-three/drei';
 import { Mesh, MeshStandardMaterial } from 'three';
 import { motion } from 'framer-motion';
+
+// Extended type declarations for JSX
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      mesh: React.DetailedHTMLProps<any, any> & { ref?: React.RefObject<THREE.Mesh> };
+      ambientLight: React.DetailedHTMLProps<any, any>;
+      directionalLight: React.DetailedHTMLProps<any, any>;
+      torusKnotGeometry: React.DetailedHTMLProps<any, any>;
+      meshStandardMaterial: React.DetailedHTMLProps<any, any>;
+    }
+  }
+}
 
 function LogoModel() {
   const meshRef = useRef<Mesh>(null);
