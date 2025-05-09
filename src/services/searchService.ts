@@ -89,46 +89,84 @@ export const searchContent = async (query: string): Promise<SearchResult[]> => {
   const lowercaseQuery = query.toLowerCase();
   
   try {
-    // Search for users in the auth system
-    const { data: users, error } = await supabase.auth.admin.listUsers();
+    // Search for real users from auth
+    const { data: authData, error: authError } = await supabase.auth.getSession();
+    
+    if (authError) {
+      console.error("Error getting session:", authError);
+    }
+    
+    // Search for users in the auth.users table
+    const { data: users, error } = await supabase
+      .from('profiles')
+      .select('id, username, avatar_url')
+      .ilike('username', `%${lowercaseQuery}%`)
+      .limit(10);
     
     if (error) {
-      console.error("Error fetching users:", error);
-      // If we can't access users through admin (which requires more permissions),
-      // we'll fall back to mock data for user results
-    } else if (users) {
+      console.error("Error searching users:", error);
+    } else if (users && users.length > 0) {
       // Convert matching users to search results
-      users.users.forEach(user => {
-        const userName = user.user_metadata?.name || user.email?.split('@')[0] || "";
-        const userEmail = user.email || "";
+      users.forEach(user => {
+        const userName = user.username || "User";
         
-        if (userName.toLowerCase().includes(lowercaseQuery) || 
-            userEmail.toLowerCase().includes(lowercaseQuery)) {
-          results.push({
-            id: user.id,
-            title: user.user_metadata?.name || userEmail.split('@')[0] || "User",
-            type: "user",
-            platform: "tiktok", // Default platform for users
-            user: {
-              name: user.user_metadata?.name || userEmail.split('@')[0] || "User",
-              avatar: user.user_metadata?.avatar_url || `https://i.pravatar.cc/150?u=${user.id}`
-            }
-          });
-        }
+        results.push({
+          id: user.id,
+          title: userName,
+          type: "user",
+          platform: "tiktok", // Default platform for users
+          user: {
+            name: userName,
+            avatar: user.avatar_url || `https://i.pravatar.cc/150?u=${user.id}`
+          }
+        });
       });
     }
+    
+    // Search for videos
+    const { data: videos, error: videosError } = await supabase
+      .from('videos')
+      .select('*, profiles:user_id(username, avatar_url)')
+      .ilike('title', `%${lowercaseQuery}%`)
+      .limit(10);
+      
+    if (videosError) {
+      console.error("Error searching videos:", videosError);
+    } else if (videos && videos.length > 0) {
+      videos.forEach(video => {
+        const profile = video.profiles as any;
+        results.push({
+          id: video.id,
+          title: video.title,
+          type: "video",
+          thumbnail: video.thumbnail_url || "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=870&q=80",
+          views: `${video.views_count || 0} views`,
+          timestamp: new Date(video.created_at).toLocaleDateString(),
+          platform: "youtube",
+          user: {
+            name: profile?.username || "Unknown User",
+            avatar: profile?.avatar_url || `https://i.pravatar.cc/150?u=${video.user_id}`
+          }
+        });
+      });
+    }
+    
+    // If no results from database or if there's an error, fallback to mock data
+    if (results.length === 0) {
+      const mockResults = mockSearchData.filter(item => 
+        item.title.toLowerCase().includes(lowercaseQuery) || 
+        item.user?.name.toLowerCase().includes(lowercaseQuery) ||
+        // Match by first letter of words for more flexible search
+        item.title.split(' ').some(word => word.toLowerCase()[0] === lowercaseQuery[0]) ||
+        (item.user?.name && item.user.name.split(' ').some(word => word.toLowerCase()[0] === lowercaseQuery[0]))
+      );
+      
+      return mockResults;
+    }
+    
+    return results;
   } catch (error) {
-    console.error("Error in user search:", error);
+    console.error("Error in search:", error);
+    return [];
   }
-
-  // Filter mock data based on query for videos and channels
-  const mockResults = mockSearchData.filter(item => 
-    item.title.toLowerCase().includes(lowercaseQuery) || 
-    item.user?.name.toLowerCase().includes(lowercaseQuery) ||
-    // Match by first letter of words for more flexible search
-    item.title.split(' ').some(word => word.toLowerCase()[0] === lowercaseQuery[0]) ||
-    (item.user?.name && item.user.name.split(' ').some(word => word.toLowerCase()[0] === lowercaseQuery[0]))
-  );
-  
-  return [...results, ...mockResults];
 };

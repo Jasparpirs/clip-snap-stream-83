@@ -7,6 +7,8 @@ import ThemeSelector from "../ThemeSelector";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 interface NavbarProps {
   onMenuClick: () => void;
@@ -16,6 +18,7 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
   const { platformFilter } = useTheme();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
+  const { user, isAuthenticated } = useAuth();
   
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,7 +28,21 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
   };
 
   const handleProfileClick = () => {
-    navigate("/profile");
+    if (isAuthenticated) {
+      navigate("/profile");
+    } else {
+      navigate("/auth");
+      toast.info("Please log in to view your profile");
+    }
+  };
+
+  const handleCreateClick = () => {
+    if (isAuthenticated) {
+      navigate("/clip-creator");
+    } else {
+      navigate("/auth");
+      toast.info("Please log in to create content");
+    }
   };
   
   return (
@@ -67,6 +84,7 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
             variant="outline" 
             size="sm" 
             className="hidden sm:flex items-center gap-1 rounded-full hover:bg-primary hover:text-white transition-colors duration-300"
+            onClick={handleCreateClick}
           >
             <Plus className="h-4 w-4" />
             <span>Create</span>
@@ -95,8 +113,11 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
             onClick={handleProfileClick}
             className="h-8 w-8 ring-2 ring-primary/20 ring-offset-1 ring-offset-background cursor-pointer transition-transform hover:scale-110"
           >
-            <AvatarImage src="https://github.com/shadcn.png" alt="User" />
-            <AvatarFallback>UN</AvatarFallback>
+            <AvatarImage 
+              src={user ? `https://i.pravatar.cc/300?u=${user.id}` : "https://github.com/shadcn.png"} 
+              alt={user?.name || "User"} 
+            />
+            <AvatarFallback>{user?.name?.charAt(0) || "U"}</AvatarFallback>
           </Avatar>
         </div>
       </div>

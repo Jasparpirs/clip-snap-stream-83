@@ -52,6 +52,9 @@ export const authService = {
       throw new Error("Failed to create account");
     }
 
+    // After registration, check if a profile exists for this user and create one if not
+    await this.createProfileIfNotExists(data.user.id, name, email);
+
     // Log the user in immediately even if email is not verified
     return {
       id: data.user.id,
@@ -79,4 +82,30 @@ export const authService = {
       name: user.user_metadata?.name || user.email?.split("@")[0] || "",
     };
   },
+
+  // Helper method to create a profile for a user if it doesn't exist
+  async createProfileIfNotExists(userId: string, name: string, email: string): Promise<void> {
+    const { data: existingProfile } = await supabase
+      .from('profiles')
+      .select()
+      .eq('id', userId)
+      .single();
+
+    if (!existingProfile) {
+      const { error } = await supabase
+        .from('profiles')
+        .insert([
+          { 
+            id: userId, 
+            username: name || email.split("@")[0],
+            bio: "Hello, I'm new here!",
+            avatar_url: `https://i.pravatar.cc/300?u=${userId}`
+          }
+        ]);
+
+      if (error) {
+        console.error("Error creating profile:", error);
+      }
+    }
+  }
 };
