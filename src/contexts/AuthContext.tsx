@@ -1,6 +1,8 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { authService, User } from '../services/authService';
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface AuthContextType {
   user: User | null;
@@ -25,10 +27,56 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user is already logged in
-    const currentUser = authService.getCurrentUser();
-    setUser(currentUser);
-    setIsLoading(false);
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        setIsLoading(true);
+        
+        if (event === 'SIGNED_IN' && session?.user) {
+          const userData: User = {
+            id: session.user.id,
+            email: session.user.email || "",
+            name: session.user.user_metadata?.name || session.user.email?.split("@")[0] || "User",
+          };
+          setUser(userData);
+          toast.success("Signed in successfully");
+        } else if (event === 'SIGNED_OUT') {
+          setUser(null);
+          toast.info("Signed out");
+        }
+
+        setIsLoading(false);
+      }
+    );
+
+    // Check current session on load
+    const checkUser = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session?.user) {
+          const userData: User = {
+            id: session.user.id,
+            email: session.user.email || "",
+            name: session.user.user_metadata?.name || session.user.email?.split("@")[0] || "User",
+          };
+          setUser(userData);
+        } else {
+          setUser(null);
+        }
+      } catch (error) {
+        console.error("Error checking user session:", error);
+        setUser(null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkUser();
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const login = async (email: string, password: string) => {
