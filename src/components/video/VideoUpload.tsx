@@ -7,6 +7,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Video, Upload, Radio, Activity } from "lucide-react";
 import { toast } from "sonner";
+import { v4 as uuidv4 } from "uuid";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface VideoUploadProps {
   onUploadComplete?: () => void;
@@ -17,6 +20,8 @@ export default function VideoUpload({ onUploadComplete }: VideoUploadProps) {
   const [description, setDescription] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [videoType, setVideoType] = useState<"normal" | "short" | "live">("normal");
+  const { user } = useAuth();
   
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -37,11 +42,53 @@ export default function VideoUpload({ onUploadComplete }: VideoUploadProps) {
       return;
     }
 
+    if (!user) {
+      toast.error("You need to be logged in to upload videos");
+      return;
+    }
+
     setUploading(true);
 
-    // Simulating upload process
     try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Create unique filename
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${uuidv4()}.${fileExt}`;
+      const filePath = `${user.id}/${fileName}`;
+      
+      // Upload the video to Supabase Storage
+      const { error: uploadError } = await supabase.storage
+        .from('videos')
+        .upload(filePath, file);
+
+      if (uploadError) {
+        throw new Error(uploadError.message);
+      }
+      
+      // Get the public URL for the uploaded video
+      const { data: { publicUrl: videoUrl } } = supabase.storage
+        .from('videos')
+        .getPublicUrl(filePath);
+        
+      // Generate a thumbnail URL (in a real app, you'd create an actual thumbnail)
+      // For now we'll just use a placeholder
+      const thumbnailUrl = `https://api.dicebear.com/7.x/shapes/svg?seed=${fileName}`;
+      
+      // Insert the video record into the database
+      const { error: insertError } = await supabase
+        .from('videos')
+        .insert({
+          title,
+          description,
+          user_id: user.id,
+          video_url: videoUrl,
+          thumbnail_url: thumbnailUrl,
+          is_live: videoType === "live"
+        });
+        
+      if (insertError) {
+        throw new Error(insertError.message);
+      }
+      
       toast.success("Video uploaded successfully!");
       
       // Reset form
@@ -54,7 +101,7 @@ export default function VideoUpload({ onUploadComplete }: VideoUploadProps) {
         onUploadComplete();
       }
     } catch (error) {
-      toast.error("Failed to upload video. Please try again.");
+      toast.error(`Failed to upload video: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setUploading(false);
     }
@@ -125,15 +172,30 @@ export default function VideoUpload({ onUploadComplete }: VideoUploadProps) {
           <div className="space-y-2">
             <Label>Video Type</Label>
             <div className="flex flex-wrap gap-4 mt-2">
-              <Button type="button" variant="outline" className="flex items-center gap-2">
+              <Button 
+                type="button" 
+                variant={videoType === "normal" ? "default" : "outline"} 
+                className="flex items-center gap-2"
+                onClick={() => setVideoType("normal")}
+              >
                 <Video className="h-4 w-4" />
                 Normal Video
               </Button>
-              <Button type="button" variant="outline" className="flex items-center gap-2">
+              <Button 
+                type="button" 
+                variant={videoType === "short" ? "default" : "outline"} 
+                className="flex items-center gap-2"
+                onClick={() => setVideoType("short")}
+              >
                 <Activity className="h-4 w-4" />
                 Short Video
               </Button>
-              <Button type="button" variant="outline" className="flex items-center gap-2">
+              <Button 
+                type="button" 
+                variant={videoType === "live" ? "default" : "outline"} 
+                className="flex items-center gap-2"
+                onClick={() => setVideoType("live")}
+              >
                 <Radio className="h-4 w-4" />
                 Live Stream
               </Button>
