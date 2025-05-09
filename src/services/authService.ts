@@ -30,6 +30,9 @@ export const authService = {
   },
 
   async register(name: string, email: string, password: string): Promise<User> {
+    // Set emailRedirectTo to the current window location to handle redirects properly
+    const redirectUrl = `${window.location.origin}/auth`;
+    
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -37,6 +40,7 @@ export const authService = {
         data: {
           name,
         },
+        emailRedirectTo: redirectUrl,
       },
     });
 
@@ -48,6 +52,7 @@ export const authService = {
       throw new Error("Failed to create account");
     }
 
+    // Log the user in immediately even if email is not verified
     return {
       id: data.user.id,
       email: data.user.email || "",
@@ -59,21 +64,19 @@ export const authService = {
     supabase.auth.signOut();
   },
 
-  getCurrentUser(): User | null {
-    const session = supabase.auth.getSession();
-    const user = supabase.auth.getUser();
-
-    // Return null if we don't have a user
-    if (!user) {
+  async getCurrentUser(): Promise<User | null> {
+    const { data, error } = await supabase.auth.getSession();
+    
+    if (error || !data.session?.user) {
       return null;
     }
-
-    // This is a temporary approach since the actual user might be loaded asynchronously
-    // We'll return a placeholder that will be updated when the real user is loaded in AuthContext
+    
+    const user = data.session.user;
+    
     return {
-      id: "loading",
-      email: "loading",
-      name: "loading",
+      id: user.id,
+      email: user.email || "",
+      name: user.user_metadata?.name || user.email?.split("@")[0] || "",
     };
   },
 };

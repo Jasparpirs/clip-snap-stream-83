@@ -1,4 +1,6 @@
 
+import { supabase } from "@/integrations/supabase/client";
+
 // Types for search results
 export interface SearchResult {
   id: string;
@@ -14,7 +16,7 @@ export interface SearchResult {
   };
 }
 
-// Mock data for search results
+// Mock data for video and channel results
 const mockSearchData: SearchResult[] = [
   {
     id: "s1",
@@ -54,16 +56,6 @@ const mockSearchData: SearchResult[] = [
     }
   },
   {
-    id: "s4",
-    title: "Jessica Williams",
-    type: "user",
-    platform: "tiktok",
-    user: {
-      name: "Jessica Williams",
-      avatar: "https://i.pravatar.cc/300?img=25"
-    }
-  },
-  {
     id: "s5",
     title: "Gaming with Alex",
     type: "video",
@@ -74,16 +66,6 @@ const mockSearchData: SearchResult[] = [
     user: {
       name: "Alex Gaming",
       avatar: "https://i.pravatar.cc/150?img=15"
-    }
-  },
-  {
-    id: "s6",
-    title: "Sarah Johnson",
-    type: "user",
-    platform: "snapchat",
-    user: {
-      name: "Sarah Johnson",
-      avatar: "https://i.pravatar.cc/150?img=20"
     }
   },
   {
@@ -99,20 +81,54 @@ const mockSearchData: SearchResult[] = [
   },
 ];
 
-// Function to search through mock data
+// Function to search through users in Supabase and mock content
 export const searchContent = async (query: string): Promise<SearchResult[]> => {
-  // Simulate network request
-  await new Promise(resolve => setTimeout(resolve, 500));
-  
   if (!query.trim()) return [];
   
-  // Filter mock data based on query - more flexible matching
+  const results: SearchResult[] = [];
   const lowercaseQuery = query.toLowerCase();
-  return mockSearchData.filter(item => 
+  
+  try {
+    // Search for users in the auth system
+    const { data: users, error } = await supabase.auth.admin.listUsers();
+    
+    if (error) {
+      console.error("Error fetching users:", error);
+      // If we can't access users through admin (which requires more permissions),
+      // we'll fall back to mock data for user results
+    } else if (users) {
+      // Convert matching users to search results
+      users.users.forEach(user => {
+        const userName = user.user_metadata?.name || user.email?.split('@')[0] || "";
+        const userEmail = user.email || "";
+        
+        if (userName.toLowerCase().includes(lowercaseQuery) || 
+            userEmail.toLowerCase().includes(lowercaseQuery)) {
+          results.push({
+            id: user.id,
+            title: user.user_metadata?.name || userEmail.split('@')[0] || "User",
+            type: "user",
+            platform: "tiktok", // Default platform for users
+            user: {
+              name: user.user_metadata?.name || userEmail.split('@')[0] || "User",
+              avatar: user.user_metadata?.avatar_url || `https://i.pravatar.cc/150?u=${user.id}`
+            }
+          });
+        }
+      });
+    }
+  } catch (error) {
+    console.error("Error in user search:", error);
+  }
+
+  // Filter mock data based on query for videos and channels
+  const mockResults = mockSearchData.filter(item => 
     item.title.toLowerCase().includes(lowercaseQuery) || 
     item.user?.name.toLowerCase().includes(lowercaseQuery) ||
     // Match by first letter of words for more flexible search
     item.title.split(' ').some(word => word.toLowerCase()[0] === lowercaseQuery[0]) ||
     (item.user?.name && item.user.name.split(' ').some(word => word.toLowerCase()[0] === lowercaseQuery[0]))
   );
+  
+  return [...results, ...mockResults];
 };

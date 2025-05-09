@@ -5,21 +5,10 @@ import VideoCard from "../video/VideoCard";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { MessageCircle, User } from "lucide-react";
 import { motion } from "framer-motion";
+import { useAuth } from "@/contexts/AuthContext";
+import { useState, useEffect } from "react";
 
-// Sample data for user profile
-const profileUser = {
-  name: "Jessica Williams",
-  username: "@jessicawill",
-  avatar: "https://i.pravatar.cc/300?img=25",
-  banner: "https://images.unsplash.com/photo-1594751684241-bcef0ac9c64d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80",
-  bio: "Digital creator | Travel enthusiast | Making content that inspires",
-  followers: "1.2M",
-  following: "345",
-  likes: "18.5M",
-  location: "Los Angeles, CA"
-};
-
-// Sample videos for this user
+// Sample videos for this user (will be replaced by real data in future)
 const userVideos = [
   {
     id: "u1",
@@ -28,8 +17,8 @@ const userVideos = [
     views: "1.8M views",
     timestamp: "1 week ago",
     user: {
-      name: profileUser.name,
-      avatar: profileUser.avatar
+      name: "",  // Will be dynamically replaced
+      avatar: "" // Will be dynamically replaced
     }
   },
   {
@@ -39,8 +28,8 @@ const userVideos = [
     views: "954K views",
     timestamp: "3 weeks ago",
     user: {
-      name: profileUser.name,
-      avatar: profileUser.avatar
+      name: "",  // Will be dynamically replaced
+      avatar: "" // Will be dynamically replaced
     }
   },
   {
@@ -50,8 +39,8 @@ const userVideos = [
     views: "2.4M views",
     timestamp: "1 month ago",
     user: {
-      name: profileUser.name,
-      avatar: profileUser.avatar
+      name: "",  // Will be dynamically replaced
+      avatar: "" // Will be dynamically replaced
     }
   }
 ];
@@ -73,6 +62,29 @@ const item = {
 };
 
 export default function UserProfile() {
+  const { user } = useAuth();
+  const [profileData, setProfileData] = useState({
+    name: user?.name || "User",
+    username: `@${user?.email?.split('@')[0] || "user"}`,
+    avatar: "https://i.pravatar.cc/300?img=25", // Default avatar
+    banner: "https://images.unsplash.com/photo-1594751684241-bcef0ac9c64d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80",
+    bio: "Digital creator | Making content that inspires",
+    followers: "1.2K",
+    following: "345",
+    likes: "18.5K",
+    location: "Tech Enthusiast"
+  });
+
+  // Update user videos with the current user's info
+  useEffect(() => {
+    if (user) {
+      userVideos.forEach(video => {
+        video.user.name = user.name;
+        video.user.avatar = profileData.avatar;
+      });
+    }
+  }, [user, profileData.avatar]);
+
   return (
     <motion.div 
       className="container py-6"
@@ -86,7 +98,7 @@ export default function UserProfile() {
         variants={item}
       >
         <img 
-          src={profileUser.banner} 
+          src={profileData.banner} 
           alt="Profile banner" 
           className="w-full h-full object-cover"
         />
@@ -99,38 +111,38 @@ export default function UserProfile() {
           transition={{ delay: 0.5, type: "spring", stiffness: 200 }}
         >
           <Avatar className="h-24 w-24 border-4 border-background">
-            <AvatarImage src={profileUser.avatar} alt={profileUser.name} />
-            <AvatarFallback>{profileUser.name.charAt(0)}</AvatarFallback>
+            <AvatarImage src={profileData.avatar} alt={profileData.name} />
+            <AvatarFallback>{profileData.name.charAt(0)}</AvatarFallback>
           </Avatar>
         </motion.div>
       </motion.div>
       
       {/* Profile Info */}
       <motion.div className="text-center mb-8" variants={item}>
-        <h1 className="text-2xl font-bold">{profileUser.name}</h1>
-        <p className="text-muted-foreground">{profileUser.username}</p>
-        <p className="mt-2 max-w-md mx-auto">{profileUser.bio}</p>
+        <h1 className="text-2xl font-bold">{profileData.name}</h1>
+        <p className="text-muted-foreground">{profileData.username}</p>
+        <p className="mt-2 max-w-md mx-auto">{profileData.bio}</p>
         
         <div className="flex items-center justify-center space-x-8 mt-4">
           <motion.div 
             className="text-center"
             whileHover={{ scale: 1.05 }}
           >
-            <p className="font-bold">{profileUser.followers}</p>
+            <p className="font-bold">{profileData.followers}</p>
             <p className="text-sm text-muted-foreground">Followers</p>
           </motion.div>
           <motion.div 
             className="text-center"
             whileHover={{ scale: 1.05 }}
           >
-            <p className="font-bold">{profileUser.following}</p>
+            <p className="font-bold">{profileData.following}</p>
             <p className="text-sm text-muted-foreground">Following</p>
           </motion.div>
           <motion.div 
             className="text-center"
             whileHover={{ scale: 1.05 }}
           >
-            <p className="font-bold">{profileUser.likes}</p>
+            <p className="font-bold">{profileData.likes}</p>
             <p className="text-sm text-muted-foreground">Likes</p>
           </motion.div>
         </div>
