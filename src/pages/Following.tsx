@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import MainLayout from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
@@ -132,11 +133,13 @@ const Following = () => {
           id: "f1",
           username: "Alex Morgan",
           avatar_url: "https://i.pravatar.cc/150?img=1",
+          is_live: Math.random() > 0.7 // Add is_live property with 30% chance of being true
         },
         {
           id: "f2",
           username: "Jamie Chen",
           avatar_url: "https://i.pravatar.cc/150?img=2",
+          is_live: Math.random() > 0.7 // Add is_live property with 30% chance of being true
         }
       ];
     } else {
