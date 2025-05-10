@@ -132,13 +132,11 @@ const Following = () => {
           id: "f1",
           username: "Alex Morgan",
           avatar_url: "https://i.pravatar.cc/150?img=1",
-          is_live: true
         },
         {
           id: "f2",
           username: "Jamie Chen",
           avatar_url: "https://i.pravatar.cc/150?img=2",
-          is_live: false
         }
       ];
     } else {
