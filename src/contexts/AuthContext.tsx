@@ -9,7 +9,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string) => Promise<void>;
+  register: (name: string, email: string, password: string) => Promise<{ error: any }>;
   logout: () => void;
 }
 
@@ -18,7 +18,7 @@ const AuthContext = createContext<AuthContextType>({
   isAuthenticated: false,
   isLoading: true,
   login: async () => {},
-  register: async () => {},
+  register: async () => ({ error: null }),
   logout: () => {},
 });
 
@@ -37,6 +37,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             id: session.user.id,
             email: session.user.email || "",
             name: session.user.user_metadata?.name || session.user.email?.split("@")[0] || "User",
+            email_confirmed_at: session.user.email_confirmed_at
           };
           setUser(userData);
           toast.success("Signed in successfully");
@@ -59,6 +60,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             id: session.user.id,
             email: session.user.email || "",
             name: session.user.user_metadata?.name || session.user.email?.split("@")[0] || "User",
+            email_confirmed_at: session.user.email_confirmed_at
           };
           setUser(userData);
         } else {
@@ -92,8 +94,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const register = async (name: string, email: string, password: string) => {
     try {
       setIsLoading(true);
-      const newUser = await authService.register(name, email, password);
-      setUser(newUser);
+      const result = await authService.register(name, email, password);
+      // Don't set the user here anymore - we want them to verify first
+      return { error: result.error };
     } finally {
       setIsLoading(false);
     }

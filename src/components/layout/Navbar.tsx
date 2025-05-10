@@ -6,9 +6,10 @@ import { Menu, Search, Bell, MessageCircle, Plus } from "lucide-react";
 import ThemeSelector from "../ThemeSelector";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface NavbarProps {
   onMenuClick: () => void;
@@ -19,6 +20,30 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const { user, isAuthenticated } = useAuth();
+  const [profileData, setProfileData] = useState<any>(null);
+  
+  useEffect(() => {
+    // Fetch user profile data when user changes
+    const fetchProfileData = async () => {
+      if (!user) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('avatar_url, username')
+          .eq('id', user.id)
+          .single();
+        
+        if (!error && data) {
+          setProfileData(data);
+        }
+      } catch (err) {
+        console.error("Error fetching profile data:", err);
+      }
+    };
+    
+    fetchProfileData();
+  }, [user]);
   
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -114,10 +139,10 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
             className="h-8 w-8 ring-2 ring-primary/20 ring-offset-1 ring-offset-background cursor-pointer transition-transform hover:scale-110"
           >
             <AvatarImage 
-              src={user ? `https://i.pravatar.cc/300?u=${user.id}` : "https://github.com/shadcn.png"} 
+              src={profileData?.avatar_url || (user ? `https://i.pravatar.cc/300?u=${user.id}` : "https://github.com/shadcn.png")} 
               alt={user?.name || "User"} 
             />
-            <AvatarFallback>{user?.name?.charAt(0) || "U"}</AvatarFallback>
+            <AvatarFallback>{profileData?.username?.[0] || user?.name?.charAt(0) || "U"}</AvatarFallback>
           </Avatar>
         </div>
       </div>

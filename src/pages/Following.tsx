@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import MainLayout from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
@@ -10,7 +9,7 @@ import { toast } from "sonner";
 interface UserProfile {
   id: string;
   username: string;
-  avatar_url?: string;
+  avatar_url: string;
   is_live?: boolean;
 }
 

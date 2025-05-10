@@ -5,6 +5,7 @@ export interface User {
   id: string;
   email: string;
   name: string;
+  email_confirmed_at?: string | null;
 }
 
 export const authService = {
@@ -26,10 +27,11 @@ export const authService = {
       id: data.user.id,
       email: data.user.email || "",
       name: data.user.user_metadata?.name || email.split("@")[0],
+      email_confirmed_at: data.user.email_confirmed_at
     };
   },
 
-  async register(name: string, email: string, password: string): Promise<User> {
+  async register(name: string, email: string, password: string): Promise<{ user: User | null, session: any, error: any }> {
     // Set emailRedirectTo to the current window location to handle redirects properly
     const redirectUrl = `${window.location.origin}/auth`;
     
@@ -45,21 +47,26 @@ export const authService = {
     });
 
     if (error) {
-      throw new Error(error.message);
+      return { user: null, session: null, error: error.message };
     }
 
     if (!data.user) {
-      throw new Error("Failed to create account");
+      return { user: null, session: null, error: "Failed to create account" };
     }
 
     // After registration, check if a profile exists for this user and create one if not
     await this.createProfileIfNotExists(data.user.id, name, email);
 
-    // Log the user in immediately even if email is not verified
+    // Return user data but don't automatically log them in
     return {
-      id: data.user.id,
-      email: data.user.email || "",
-      name: name || email.split("@")[0],
+      user: {
+        id: data.user.id,
+        email: data.user.email || "",
+        name: name || email.split("@")[0],
+        email_confirmed_at: data.user.email_confirmed_at
+      }, 
+      session: data.session, 
+      error: null
     };
   },
 
@@ -80,6 +87,7 @@ export const authService = {
       id: user.id,
       email: user.email || "",
       name: user.user_metadata?.name || user.email?.split("@")[0] || "",
+      email_confirmed_at: user.email_confirmed_at
     };
   },
 
@@ -107,5 +115,17 @@ export const authService = {
         console.error("Error creating profile:", error);
       }
     }
+  },
+
+  // Update profile information
+  async updateProfile(userId: string, profileData: {
+    username?: string;
+    bio?: string;
+    avatar_url?: string;
+  }): Promise<{ data: any, error: any }> {
+    return await supabase
+      .from('profiles')
+      .update(profileData)
+      .eq('id', userId);
   }
 };

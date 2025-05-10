@@ -9,9 +9,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-
-// This will be populated with current user's videos
-const userVideos = [];
+import EditProfile from "./EditProfile";
+import { useNavigate } from "react-router-dom";
 
 const container = {
   hidden: { opacity: 0 },
@@ -31,6 +30,7 @@ const item = {
 
 export default function UserProfile() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [following, setFollowing] = useState(false);
   const [videos, setVideos] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -47,13 +47,51 @@ export default function UserProfile() {
     memberSince: "January 2023"
   });
 
-  // Fetch user videos when component mounts
+  const fetchProfileData = async () => {
+    if (!user) return;
+
+    try {
+      setLoading(true);
+      
+      // Fetch the user's profile data
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+      
+      if (error) {
+        console.error("Error fetching profile:", error);
+        return;
+      }
+      
+      if (profile) {
+        setProfileData({
+          ...profileData,
+          name: user.name || profile.username,
+          username: `@${profile.username}`,
+          avatar: profile.avatar_url,
+          bio: profile.bio || "No bio yet",
+          followers: profile.followers_count?.toString() || "0",
+          following: profile.following_count?.toString() || "0"
+        });
+      }
+    } catch (err) {
+      console.error("Error in fetchProfileData:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch user videos and profile when component mounts
   useEffect(() => {
-    const fetchUserVideos = async () => {
+    const fetchData = async () => {
       if (!user) return;
       
       try {
         setLoading(true);
+        
+        // Fetch the user's videos
         const { data, error } = await supabase
           .from('videos')
           .select('*')
@@ -65,7 +103,7 @@ export default function UserProfile() {
         }
         
         // Map the database videos to the format expected by VideoCard
-        const formattedVideos = data.map(video => ({
+        const formattedVideos = data?.map(video => ({
           id: video.id,
           title: video.title,
           thumbnail: video.thumbnail_url || "https://images.unsplash.com/photo-1497032628192-86f99bcd76bc?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80",
@@ -75,35 +113,53 @@ export default function UserProfile() {
             name: user.name,
             avatar: profileData.avatar
           }
-        }));
+        })) || [];
         
         setVideos(formattedVideos);
+        
+        // Fetch profile data
+        await fetchProfileData();
+        
       } catch (err) {
-        console.error("Error in fetchUserVideos:", err);
+        console.error("Error in fetchData:", err);
       } finally {
         setLoading(false);
       }
     };
     
-    fetchUserVideos();
-  }, [user, profileData.avatar]);
+    fetchData();
+  }, [user]);
 
-  const handleFollow = () => {
-    setFollowing(!following);
-    if (!following) {
-      toast.success("Followed successfully!");
-      // In a real app, you would update the database here
-      setProfileData(prev => ({
-        ...prev,
-        followers: (parseInt(prev.followers) + 1).toString()
-      }));
-    } else {
-      toast.info("Unfollowed successfully");
-      // In a real app, you would update the database here
-      setProfileData(prev => ({
-        ...prev,
-        followers: (parseInt(prev.followers) - 1).toString()
-      }));
+  const handleFollow = async () => {
+    if (!user) {
+      navigate('/auth');
+      toast.info("Please log in to follow users");
+      return;
+    }
+
+    try {
+      setFollowing(!following);
+      
+      if (!following) {
+        toast.success("Followed successfully!");
+        // In a real app, you would update the database here
+        setProfileData(prev => ({
+          ...prev,
+          followers: (parseInt(prev.followers) + 1).toString()
+        }));
+      } else {
+        toast.info("Unfollowed successfully");
+        // In a real app, you would update the database here
+        setProfileData(prev => ({
+          ...prev,
+          followers: (parseInt(prev.followers) - 1).toString()
+        }));
+      }
+    } catch (error) {
+      console.error("Error following/unfollowing:", error);
+      toast.error("An error occurred. Please try again.");
+      // Revert the state change
+      setFollowing(!following);
     }
   };
 
@@ -178,12 +234,22 @@ export default function UserProfile() {
               {following ? 'Following' : 'Follow'}
             </Button>
           </motion.div>
+          
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
             <Button variant="outline">
               <MessageCircle className="mr-2 h-4 w-4" />
               Message
             </Button>
           </motion.div>
+          
+          {user && (
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <EditProfile 
+                profileData={profileData} 
+                onProfileUpdate={fetchProfileData}
+              />
+            </motion.div>
+          )}
         </div>
       </motion.div>
       
@@ -218,7 +284,7 @@ export default function UserProfile() {
               ) : (
                 <div className="col-span-3 text-center py-8">
                   <p className="text-muted-foreground mb-4">No videos yet</p>
-                  <Button>Upload your first video</Button>
+                  <Button onClick={() => navigate('/clip-creator')}>Upload your first video</Button>
                 </div>
               )}
             </motion.div>
@@ -257,10 +323,7 @@ export default function UserProfile() {
                 <div>
                   <h3 className="text-lg font-medium mb-2">About</h3>
                   <p>
-                    Hey there! I'm {profileData.name}, a digital creator passionate about travel, fashion, and lifestyle content.
-                    I started my journey in 2020 and have been blessed to work with amazing brands and connect with
-                    incredible people around the world. My goal is to inspire you to explore new places, try new things,
-                    and live your best life!
+                    {profileData.bio}
                   </p>
                 </div>
               </div>
